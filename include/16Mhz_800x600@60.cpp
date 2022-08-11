@@ -9,7 +9,7 @@ unsigned char rowItr;
 ISR(TIMER0_OVF_vect) {
     //CASE: Painting of a new line started
     
-    //NOTE: 3.81us are available before the compare interrupt occurs
+    //NOTE: 3.2us are available before the compare interrupt occurs
     UCSR0B = 0;//Turn USART transmitter off
 
     //WARNING: Following line is responsible for the leftmost blank column

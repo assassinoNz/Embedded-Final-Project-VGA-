@@ -2,7 +2,7 @@
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 
-#include <bitmap_640x480@60.h>
+#include <bitmap_800x600@60.h>
 
 unsigned char rowItr;
 unsigned char colItr;
@@ -23,7 +23,7 @@ ISR(TIMER0_OVF_vect) {
 
     rowIter increments once per every 8 scan lines
     */
-    rowItr = (TCNT1-35)>>3; //Pre-calculate row iterator for current visible scan line
+    rowItr = (TCNT1-27)>>3; //Pre-calculate row iterator for current visible scan line
 }
 
 ISR(TIMER0_COMPB_vect) {
@@ -46,17 +46,17 @@ void setupHorizontalSignal() {
 
     //====TCNT0,OCR0A,OCR0B==========
     /*NOTE:
-    The counter0 has milestones 0-7.6(LOW), 7.6-63.55(HIGH)
-    0-7.6 is the sync pulse (3.8133us)
-    7.6-11.43 is the back porch (1.9066us)
-    11.43-62.28 is the visible time (25.4220us)
-    62.28-63.55 is the front porch (31.7775us)
+    The counter0 has milestones 0-6(LOW), 6-53(HIGH)
+    0-6.4 is the sync pulse (3.2us)
+    6.4-10.8 is the back porch (2.2us)
+    10.8-50.8 is the visible time (20us)
+    50.8-52.8 is the front porch (1us)
 
-    0-63.55 is the total (16.5792ms)
+    0-53 is the total (26.4us)
     */
     TCNT0 = 0; //Set the initial counter0 value
-    OCR0B = (unsigned char) 7; //Set OC0B level change value for counter0
-    OCR0A = (unsigned char) 63; //Set counter0 TOP value
+    OCR0B = (unsigned char) 6; //Set OC0B level change value for counter0
+    OCR0A = (unsigned char) 53; //Set counter0 TOP value
 
     //====TIMSK0==============
     TIMSK0 |= (1<<TOIE0) | (1<<OCIE0B); //Enable counter0 overflow and compareB interrupts
@@ -73,17 +73,17 @@ void setupVerticalSignal() {
 
     //====TCNT1,OCR1A,OCR1B==========
     /*NOTE:
-    The counter1 has milestones 0-2(LOW), 2-525(HIGH)
-    0-2 is the sync pulse (0.0635ms)
-    2-35 is the back porch (1.0486ms)
-    35-515.70 is the visible time (15.2532ms)
-    515-525 is the front porch (0.6355ms)
+    The counter1 has milestones 0-4(LOW), 4-628(HIGH)
+    0-4 is the sync pulse (0.1056ms)
+    4-27 is the back porch (0.6072ms)
+    27-627 is the visible time (15.84ms)
+    627-628 is the front porch (0.0264ms)
 
-    0-525 is the total (16.5792ms)
+    0-628 is the total (16.5792ms)
     */
     TCNT1 = 0; //Set the initial counter1 value
-    OCR1B = (unsigned short) 1; //Set OC1B level change value for counter1
-    OCR1A = (unsigned short) 524; //Set counter1 TOP
+    OCR1B = (unsigned short) 3; //Set OC1B level change value for counter1
+    OCR1A = (unsigned short) 627; //Set counter1 TOP
 }
 
 void setupUSART() {

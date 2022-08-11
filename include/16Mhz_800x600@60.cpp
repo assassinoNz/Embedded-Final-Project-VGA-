@@ -22,7 +22,7 @@ ISR(TIMER0_OVF_vect) {
 
     rowIter increments once per every 2 scan lines
     */
-    rowItr = (TCNT1-27)>>2; //Pre-calculate row iterator for current visible scan line
+    rowItr = (TCNT1-27)>>1; //Pre-calculate row iterator for current visible scan line
 }
 
 ISR(TIMER0_COMPB_vect) {

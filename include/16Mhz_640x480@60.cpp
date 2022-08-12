@@ -5,7 +5,6 @@
 #include <bitmap_640x480@60.h>
 
 unsigned char rowItr;
-unsigned char colItr;
 
 ISR(TIMER0_OVF_vect) {
     //CASE: Painting of a new line started

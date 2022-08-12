@@ -1,26 +1,13 @@
-//CONDITIONAL COMPILATION DEFINITIONS
-#define RESOLUTION_640x480
-#define PALETTE_1BIT
-
 //EXTERNAL DEPENDENCIES
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 
+//LOCAL DEPENDENCIES
+#include <640x480/1bit/97ConstructionsLogo.h>
+
 //LOCAL DEFINITIONS
 #define nop5 asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t")
-
-//LOCAL DEPENDENCIES
-#ifdef RESOLUTION_800x600
-    #ifdef PALETTE_1BIT
-        #include <800x600/1bit/97ConstructionsLogo.h>
-    #endif
-#endif
-#ifdef RESOLUTION_640x480
-    #ifdef PALETTE_1BIT
-        #include <640x480/1bit/97ConstructionsLogo.h>
-    #endif
-#endif
 
 //GLOBALS
 unsigned char rowItr;
@@ -30,27 +17,17 @@ ISR(TIMER0_OVF_vect) {
     //CASE: Painting of a new line started
     
     //NOTE: Within the horizontal sync pulse, all R,G,B channels must be at 0V
-    UCSR0B = 0;//Turn USART transmitter off to blank all R,G,B channels
+    UCSR0B = 0; //Turn USART transmitter off to blank all R,G,B channels
 
+    /*NOTE:
+    currentVisibleScanLineIndex = currentScanLineIndex - nonVisibleScanLines
+    rowIter increments once per every 2**(vPixels/rows-1) scan lines
+    */
     #ifdef RESOLUTION_800x600
-        /*NOTE:
-        currentVisibleScanLineIndex = currentScanLineIndex - nonVisibleScanLines
-        So,
-        currentVisibleScanLineIndex = TCNT1 - 31
-
-        rowIter increments once per every 2 scan lines
-        */
-        rowItr = (TCNT1-27)>>1; //Pre-calculate row iterator for current visible scan line
+        rowItr = (TCNT1-27)>>(vPixels/rows-1); //Pre-calculate row iterator for current visible scan line
     #endif
     #ifdef RESOLUTION_640x480
-        /*NOTE:
-        currentVisibleScanLineIndex = currentScanLineIndex - nonVisibleScanLines
-        So,
-        currentVisibleScanLineIndex = TCNT1 - 35
-
-        rowIter increments once per every 2 scan lines
-        */
-        rowItr = (TCNT1-35)>>1; //Pre-calculate row iterator for current visible scan line
+        rowItr = (TCNT1-35)>>(vPixels/rows-1); //Pre-calculate row iterator for current visible scan line
     #endif
 
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][0]); //Pre-load the first column to transmission buffer

@@ -1,7 +1,14 @@
+//CONDITIONAL COMPILATION DEFINITIONS
+#define RESOLUTION_800x600
+#define PALETTE_1BIT
+
+//EXTERNAL DEPENDENCIES
 #include <avr/pgmspace.h>
 
-const unsigned char cols = 20; //Number of columns/bytes/characters horizontally supported by the current display mode
-const unsigned short rows = 300; //Number of rows/characters vertically supported by the current display mode
+const unsigned short hPixels = 800; //Number of horizontal pixels in the targeted VGA mode
+const unsigned short vPixels = 600; //Number of vertical pixels in the targeted VGA mode
+const unsigned char cols = 20; //Number of columns/bytes horizontally supported by the current display mode
+const unsigned short rows = 300; //Number of rows vertically supported by the current display mode
 
 //NOTE: The following frame buffer maps directly to the frame buffer displayed
 const unsigned char frameBuffer[rows][cols] PROGMEM = {

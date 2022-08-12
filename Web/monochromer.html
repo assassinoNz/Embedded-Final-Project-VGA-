@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en-us" style="height: 100%; width: 100%">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monochromer</title>
+
+    <link rel="stylesheet" href="./stylesheets/index.css" />
+    <link rel="stylesheet" href="./stylesheets/monochromer.css" />
+
+    <script src="scripts/index.js"></script>
+    <script src="scripts/monochromer.js"></script>
+</head>
+
+<body onload="main();">
+    <div style="grid-area: r3;">
+        <h1 style="overflow: visible; font-size: 32px; text-shadow: 0 0 10px black;">MONOCHROMER</h1>
+    </div>
+    <div style="grid-area: r2;">
+        <div class="card">
+            <canvas width="192" height="240"></canvas>
+        </div>
+    </div>
+    <div id="buttonContainer" style="grid-area: r1;">
+        <button title="Upload reference image" style="background-image: url(./img/outline_bar_chart_white_24dp.png);">
+            <input type="file" style="display: none;">
+            <img style="display: none;"/>
+        </button>
+        <button title="Monochromize image" style="background-image: url(./img/outline_info_white_24dp.png);"></button>
+        <button title="Export" style="background-image: url(./img/outline_feed_white_24dp.png);"></button>
+    </div>
+</body>
+
+</html>

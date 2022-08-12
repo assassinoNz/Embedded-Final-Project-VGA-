@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        * {
+            border: thin solid red;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        #imgPreview {
+            height: 600px;
+        }
+
+        #canvas {
+            width: 800px;
+            height: 600px;
+        }
+    </style>
+</head>
+<body>
+    <h3>1. Upload Image</h3>
+    <input type="file" name="" id="fileInput">
+    <br>
+    <img id="imgPreview">
+
+    <h3>2. Add Effects</h3>
+    <canvas id="canvas" width="160" height="400"></canvas>
+
+    <h3>3. Get Array</h3>
+    <p id="para"></p>
+
+    <script>
+        const fileInput = document.getElementById("fileInput");
+        const imgPreview = document.getElementById("imgPreview");
+        const canvas = document.getElementById("canvas");
+        const ctx2d = canvas.getContext("2d");
+        const para = document.getElementById("para");
+
+        fileInput.addEventListener("change", (e) => {
+            if (fileInput.files.length > 0) {
+                imgPreview.src = URL.createObjectURL(fileInput.files[0]);
+            }
+        })
+        
+        imgPreview.addEventListener("load", ()=> {
+            // ctx2d.filter = "grayscale(100%)";
+            ctx2d.drawImage(imgPreview, 0, 0, canvas.width, canvas.height);
+            const imageData = ctx2d.getImageData(0, 0, canvas.width, canvas.height);
+
+            let bitmapStr = "{<br>";
+
+            for (let row = 0; row < imageData.height; row++) {
+                let rowStr = "{";
+
+                for (let col = 0; col < imageData.width; col+=8) {
+                    let colStr = "";
+
+                    for (let bit = col; bit < col+8; bit++) {
+                        const r = row * (imageData.width * 4) + bit * 4;
+                        const avg = (imageData.data[r] + imageData.data[r + 1] + imageData.data[r + 2]) / 3;
+                        if (avg > 125) {
+                            colStr += "1";
+                            imageData.data[r]     = 255; // red
+                            imageData.data[r + 1] = 255; // green
+                            imageData.data[r + 2] = 255; // blue
+                        } else {
+                            colStr += "0";
+                            imageData.data[r]     = 0; // red
+                            imageData.data[r + 1] = 0; // green
+                            imageData.data[r + 2] = 0; // blue
+                        }
+                    }
+
+                    const hex = parseInt(colStr, 2).toString(16).toUpperCase();
+                    rowStr += "0x" + (hex.length == 1 ? "0"+hex : hex) + ",";
+                }
+
+                rowStr = rowStr.slice(0, -1) + "},<br>";
+                bitmapStr += rowStr;
+            }
+
+            bitmapStr += "}";
+
+            ctx2d.putImageData(imageData, 0, 0);
+            para.innerHTML = bitmapStr;
+        });
+    </script>
+</body>
+</html>

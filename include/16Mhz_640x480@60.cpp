@@ -9,30 +9,106 @@ unsigned char colItr;
 
 ISR(TIMER0_OVF_vect) {
     //CASE: Painting of a new line started
+    //NOTE: 3.8133us are available before the compare interrupt occurs
+
+    //NOTE: Within the horizontal sync pulse, all R,G,B channels must be at 0V
+    UCSR0B = 0;//Turn USART transmitter off to blank all R,G,B channels
     
-    //NOTE: 3.81us are available before the compare interrupt occurs
-    UCSR0B = 0;//Turn USART transmitter off
-
-    //WARNING: Following line is responsible for the leftmost blank column
-    UDR0 = 0; //Clear transmission buffer
-
     /*NOTE:
     currentVisibleScanLineIndex = currentScanLineIndex - nonVisibleScanLines
     So,
     currentVisibleScanLineIndex = TCNT1 - 35
 
-    rowIter increments once per every 8 scan lines
+    rowIter increments once per every 2 scan lines
     */
-    rowItr = (TCNT1-35)>>3; //Pre-calculate row iterator for current visible scan line
+    rowItr = (TCNT1-35)>>1; //Pre-calculate row iterator for current visible scan line
+
+    UDR0 = pgm_read_byte(&bitmap[rowItr][0]); //Pre-load the first column to transmission buffer
 }
 
 ISR(TIMER0_COMPB_vect) {
     //CASE: Non-sync region of the currently painting line started
     UCSR0B = (1<<TXEN0); //Turn USART transmitter on
 
-    for (colItr = 0; colItr < cols; colItr++) {
-        UDR0 = pgm_read_byte(&bitmap[rowItr][colItr]);
-    }
+    //WARNING: Since we have preloaded the 0th index column, next column is at 1st index
+    UDR0 = pgm_read_byte(&bitmap[rowItr][1]);
+    UDR0 = pgm_read_byte(&bitmap[rowItr][2]);
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    UDR0 = pgm_read_byte(&bitmap[rowItr][3]);
+    UDR0 = pgm_read_byte(&bitmap[rowItr][4]);
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    UDR0 = pgm_read_byte(&bitmap[rowItr][5]);
+    UDR0 = pgm_read_byte(&bitmap[rowItr][6]);
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    UDR0 = pgm_read_byte(&bitmap[rowItr][7]);
+    UDR0 = pgm_read_byte(&bitmap[rowItr][8]);
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    UDR0 = pgm_read_byte(&bitmap[rowItr][9]);
+    UDR0 = pgm_read_byte(&bitmap[rowItr][10]);
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    UDR0 = pgm_read_byte(&bitmap[rowItr][11]);
+    UDR0 = pgm_read_byte(&bitmap[rowItr][12]);
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    UDR0 = pgm_read_byte(&bitmap[rowItr][13]);
+    UDR0 = pgm_read_byte(&bitmap[rowItr][14]);
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    UDR0 = pgm_read_byte(&bitmap[rowItr][15]);
+    UDR0 = pgm_read_byte(&bitmap[rowItr][16]);
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    UDR0 = pgm_read_byte(&bitmap[rowItr][17]);
+    UDR0 = pgm_read_byte(&bitmap[rowItr][18]);
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    UDR0 = pgm_read_byte(&bitmap[rowItr][19]);
+    UDR0 = pgm_read_byte(&bitmap[rowItr][20]);
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    UDR0 = pgm_read_byte(&bitmap[rowItr][21]);
+    UDR0 = pgm_read_byte(&bitmap[rowItr][22]);
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    asm volatile("nop\n\t");
+    UDR0 = pgm_read_byte(&bitmap[rowItr][23]);
 }
 
 void setupHorizontalSignal() {
@@ -111,11 +187,17 @@ int main(void) {
     //====INTERRUPTS==================
     sei(); //Enable global interrupts
 
-    //COUNTER INITIALIZATION
+    //====COUNTER INITIALIZATION
     TCCR0B |= (1<<CS01); //Start counter0 with a pre-scaler of 8
     TCCR1B |= (1<<CS12) | (1<<CS11); //Start counter1 with NGT clock on PD5/OC0B/T1/D5 (Output of counter0)
     
     while (1) {
-        
+        // for (unsigned short row = 0; row < rows; row++) {
+        //     for (unsigned char col = 0; col < cols; col+=8) {
+        //         for (char bit = 0; bit < 8; bit++) {
+        //             bitmap[row][col] = bitmap[row][col] >> 1;
+        //         }
+        //     }
+        // }
     }
 }

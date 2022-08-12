@@ -8,7 +8,7 @@
 #include <avr/pgmspace.h>
 
 //LOCAL DEFINITIONS
-#define nop asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t")
+#define nop5 asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t")
 
 //LOCAL DEPENDENCIES
 #ifdef RESOLUTION_800x600
@@ -63,39 +63,39 @@ ISR(TIMER0_COMPB_vect) {
     //WARNING: Since we have preloaded the 0th index column, next column is at 1st index
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][1]);
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][2]);
-    nop;
+    nop5;
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][3]);
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][4]);
-    nop;
+    nop5;
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][5]);
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][6]);
-    nop;
+    nop5;
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][7]);
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][8]);
-    nop;
+    nop5;
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][9]);
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][10]);
-    nop;
+    nop5;
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][11]);
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][12]);
-    nop;
+    nop5;
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][13]);
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][14]);
-    nop;
+    nop5;
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][15]);
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][16]);
-    nop;
+    nop5;
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][17]);
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][18]);
-    nop;
+    nop5;
     UDR0 = pgm_read_byte(&frameBuffer[rowItr][19]);
 
     #ifdef RESOLUTION_640x480
         UDR0 = pgm_read_byte(&frameBuffer[rowItr][20]);
-        nop;
+        nop5;
         UDR0 = pgm_read_byte(&frameBuffer[rowItr][21]);
         UDR0 = pgm_read_byte(&frameBuffer[rowItr][22]);
-        nop;
+        nop5;
         UDR0 = pgm_read_byte(&frameBuffer[rowItr][23]);
     #endif
 }

@@ -4,7 +4,7 @@
 #include <avr/pgmspace.h>
 
 //LOCAL DEPENDENCIES
-#include <640x480/1bit/97ConstructionsLogo.h>
+#include <640x480/1bit/UoCLogo.h>
 
 //LOCAL DEFINITIONS
 #define nop5 asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t")
@@ -17,7 +17,7 @@ ISR(TIMER0_OVF_vect) {
     //CASE: Painting of a new line started
     
     //NOTE: Within the horizontal sync pulse, all R,G,B channels must be at 0V
-    UCSR0B = 0; //Turn USART transmitter off to blank all R,G,B channels
+    //Since we are disabling USART at the end of each line, no need to do it here
 
     /*NOTE:
     currentVisibleScanLineIndex = currentScanLineIndex - nonVisibleScanLines
@@ -35,6 +35,13 @@ ISR(TIMER0_OVF_vect) {
 
 ISR(TIMER0_COMPB_vect) {
     //CASE: Non-sync region of the currently painting line started
+
+    /*NOTE:
+    USART protocol requires small HIGH(5V) time on the transmitter pin to establish connection.
+    Therfore, enabling USART transmission on pin that is LOW(0V) may need to be made HIGH for a few microseconds for it to be ready.
+    */
+    //WARNING: Since we are enabling USART on a LOW pin, few starting pixels on each scan line will turn white
+    //WARNING: Since we are enabling USART on a LOW pin, few starting pixels on each scan line will turn white
     UCSR0B = (1<<TXEN0); //Turn USART transmitter on
 
     //WARNING: Since we have preloaded the 0th index column, next column is at 1st index
@@ -75,6 +82,8 @@ ISR(TIMER0_COMPB_vect) {
         nop5;
         UDR0 = pgm_read_byte(&frameBuffer[rowItr][23]);
     #endif
+
+    UCSR0B = 0; //Turn USART transmitter off to blank all R,G,B channels
 }
 
 //METHODS

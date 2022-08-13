@@ -27,13 +27,5 @@ function main() {
         }
     });
 
-    //Add onload to img
-    canvas = document.querySelector("canvas");
-    ctx = canvas.getContext("2d");
-    img.addEventListener("load", () => {
-        const imgScaledWidth = (img.width*canvas.height)/img.height;
-        ctx.drawImage(img, (canvas.width-imgScaledWidth)/2, 0, imgScaledWidth, canvas.height);
-    });
-
     init();
 }

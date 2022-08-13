@@ -91,8 +91,6 @@ body>div {
 .card > canvas {
     width: 100%;
     height: 100%;
-
-    border: thin solid black;
 }
 
 button {

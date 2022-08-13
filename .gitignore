@@ -4,3 +4,5 @@ Proteus
 .pio
 .vscode/
 test
+*.js
+*.js.map

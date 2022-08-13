@@ -9,13 +9,12 @@
     <link rel="stylesheet" href="./stylesheets/index.css" />
     <link rel="stylesheet" href="./stylesheets/monochromer.css" />
 
-    <script src="scripts/index.js"></script>
-    <script src="scripts/monochromer.js"></script>
+    <script src="./scripts/index.js" defer></script>
 </head>
 
-<body onload="main();">
-    <div style="grid-area: r3;">
-        <h1 style="overflow: visible; font-size: 32px; text-shadow: 0 0 10px black;">MONOCHROMER</h1>
+<body>
+    <div style="grid-area: r3; flex-direction: column;">
+        <h3>Pixelator</h3>
     </div>
     <div style="grid-area: r2;">
         <div class="card">
@@ -23,12 +22,12 @@
         </div>
     </div>
     <div id="buttonContainer" style="grid-area: r1;">
-        <button title="Upload reference image" style="background-image: url(./img/outline_bar_chart_white_24dp.png);">
+        <button title="Upload reference image" style="background-image: url(./img/file_upload_FILL0_wght400_GRAD0_opsz48.png);">
             <input type="file" style="display: none;">
             <img style="display: none;"/>
         </button>
-        <button title="Monochromize image" style="background-image: url(./img/outline_info_white_24dp.png);"></button>
-        <button title="Export" style="background-image: url(./img/outline_feed_white_24dp.png);"></button>
+        <input title="Monochrome point" type="range" id="midPointInput" value="125" start="0" step="1" end="255">
+        <button title="Generate code" style="background-image: url(./img/file_download_FILL0_wght400_GRAD0_opsz48.png);"></button>
     </div>
 </body>
 

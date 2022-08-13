@@ -48,7 +48,7 @@ function init() {
             frameBufferArr += rowArr.slice(0, -1) + "},\n"; //Remove the trailing comma in the last element //close the array
         }
 
-        frameBufferArr = frameBufferArr.slice(0, -2) + "\n}</pre>"; //Remove the trailing comma in the last array //Close the multi dimensional array
+        frameBufferArr = frameBufferArr.slice(0, -2) + "\n};</pre>"; //Remove the trailing comma in the last array //Close the multi dimensional array
         ctx.putImageData(frameBuffer, 0, 0); //Update canvas
     });
 

@@ -129,6 +129,7 @@ const unsigned char frameBuffer[rows][cols] PROGMEM = {\n`;
 
                     if (bit === 191) {
                         //CASE: Currently processing the last bit of the line
+                        //NOTE: In USART based code, ther will be a 1 pixel wide HIGH band in the left side of the frame. To balance that ugliness, we manually add a 1 pixel wide HIGH band at the end also.
                         //Make that bit high. No matter the actual value
                         arrElementBin += "1";
                     } else {

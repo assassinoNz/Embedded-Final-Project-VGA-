@@ -109,8 +109,8 @@ class Monochromer {
 
 const unsigned short hPixels = 640; //Number of horizontal pixels in the targeted VGA mode
 const unsigned short vPixels = 480; //Number of vertical pixels in the targeted VGA mode
-const unsigned char cols = 24; //Number of columns/bytes horizontally supported by the current display mode
-const unsigned char rows = 240; //Number of rows vertically supported by the current display mode
+const unsigned char cols = ${this.canvas.width/8}; //Number of columns/bytes horizontally supported by the current display mode
+const unsigned char rows = ${this.canvas.height}; //Number of rows vertically supported by the current display mode
 
 //NOTE: The following frame buffer maps directly to the frame buffer displayed
 const unsigned char frameBuffer[rows][cols] PROGMEM = {\n`;

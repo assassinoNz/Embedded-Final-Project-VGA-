@@ -8,82 +8,96 @@ class Monochromer {
     static canvas: HTMLCanvasElement;
     static ctx: CanvasRenderingContext2D;
 
+    static hRes: number;
+    static vRes: number;
+    static canvasRect: DOMRect;
+    static handlers = {
+        pointerMoveCanvas: Monochromer.pointerMoveCanvas.bind(Monochromer)
+    };
+
     static {
-        this.midPointInput = document.getElementById("midPointInput") as HTMLInputElement;
-        this.buttonContainer = document.getElementById("buttonContainer") as HTMLDivElement;
-        this.fileInput = this.buttonContainer.children[0].firstElementChild as HTMLInputElement;
-        this.img = this.buttonContainer.children[0].children[1] as HTMLImageElement;
-        this.canvas = document.querySelector("canvas") as HTMLCanvasElement;
-        this.ctx = this.canvas.getContext("2d") as CanvasRenderingContext2D;
+        Monochromer.midPointInput = document.getElementById("midPointInput") as HTMLInputElement;
+        Monochromer.buttonContainer = document.getElementById("buttonContainer") as HTMLDivElement;
+        Monochromer.fileInput = Monochromer.buttonContainer.children[0].firstElementChild as HTMLInputElement;
+        Monochromer.img = Monochromer.buttonContainer.children[0].children[1] as HTMLImageElement;
+        Monochromer.canvas = document.querySelector("canvas") as HTMLCanvasElement;
+        Monochromer.ctx = Monochromer.canvas.getContext("2d") as CanvasRenderingContext2D;
+
+        Monochromer.hRes = parseInt(Monochromer.canvas.dataset.hRes!);
+        Monochromer.vRes = parseInt(Monochromer.canvas.dataset.vRes!);
     }
 
     static init() {
         //Clear canvas
-        this.ctx.fillStyle = "black";
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        Monochromer.ctx.fillStyle = "black";
+        Monochromer.ctx.fillRect(0, 0, Monochromer.canvas.width, Monochromer.canvas.height);
+
+        //Add onmousedown and onmouseup to canvas
+        Monochromer.canvas.addEventListener("mousedown", Monochromer.pointerDownCanvas);
+        Monochromer.canvas.addEventListener("mouseup", Monochromer.pointerUpCanvas);
 
         //Add onclick to upload file button
-        this.buttonContainer.children[0].addEventListener("click", () => this.fileInput.click());
+        Monochromer.buttonContainer.children[0].addEventListener("click", () => Monochromer.fileInput.click());
 
         //Add onload to img
-        this.img.addEventListener("load", () => {
-            this.loadImageOnCanvas();
+        Monochromer.img.addEventListener("load", () => {
+            Monochromer.loadImageOnCanvas();
 
             //Auto calculate a suitable mid point
             //NOTE: midpoint = (sum of pixelRGBAverage)/pixelCount
 
-            const frameBuffer = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+            const frameBuffer = Monochromer.ctx.getImageData(0, 0, Monochromer.canvas.width, Monochromer.canvas.height);
             let rgbAverageSum = 0;
             for (let pixel = 0; pixel < frameBuffer.data.length; pixel += 4) {
                 const rgbAverage = (frameBuffer.data[pixel] + frameBuffer.data[pixel + 1] + frameBuffer.data[pixel + 2]) / 3;
                 rgbAverageSum += rgbAverage;
             }
 
-            this.midPointInput.value = (rgbAverageSum / (frameBuffer.data.length / 4)).toString();
+            Monochromer.midPointInput.value = (rgbAverageSum / (frameBuffer.data.length / 4)).toString();
 
             //Immediately preview effects
-            this.applyEffects();
+            Monochromer.applyEffects();
         });
 
         //Add onchange to upload file input
-        this.fileInput.addEventListener("change", () => this.changeUploadedImage());
+        Monochromer.fileInput.addEventListener("change", Monochromer.changeUploadedImage);
 
         //Add onchange to midpoint input
-        this.midPointInput.addEventListener("change", () => {
-            this.loadImageOnCanvas();
-            this.applyEffects();
+        Monochromer.midPointInput.addEventListener("change", () => {
+            Monochromer.loadImageOnCanvas();
+            Monochromer.applyEffects();
         });
 
         //Add onclick to export button
-        this.buttonContainer.children[2].addEventListener("click", () => this.generateCode());
+        Monochromer.buttonContainer.children[2].addEventListener("click", Monochromer.generateCode);
     }
 
     static loadImageOnCanvas() {
         //Clear canvas
-        this.ctx.fillStyle = "black";
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        Monochromer.ctx.fillStyle = "black";
+        Monochromer.ctx.fillRect(0, 0, Monochromer.canvas.width, Monochromer.canvas.height);
 
-        const imgScaledWidth = (this.img.width * this.canvas.height) / this.img.height;
-        this.ctx.drawImage(this.img, (this.canvas.width - imgScaledWidth * 0.7) / 2, 0, imgScaledWidth * 0.7, this.canvas.height);
+        const imgScaledWidth = (Monochromer.img.width * Monochromer.canvas.height) / Monochromer.img.height;
+        Monochromer.ctx.drawImage(Monochromer.img, (Monochromer.canvas.width - imgScaledWidth * 0.7) / 2, 0, imgScaledWidth * 0.7, Monochromer.canvas.height);
     }
 
     static changeUploadedImage() {
-        if (this.fileInput.files) {
-            if (this.lastObjectURL) {
-                URL.revokeObjectURL(this.lastObjectURL);
+        if (Monochromer.fileInput.files) {
+            if (Monochromer.lastObjectURL) {
+                URL.revokeObjectURL(Monochromer.lastObjectURL);
             }
-            this.lastObjectURL = URL.createObjectURL(this.fileInput.files[0]);
-            this.img.src = this.lastObjectURL as string;
+            Monochromer.lastObjectURL = URL.createObjectURL(Monochromer.fileInput.files[0]);
+            Monochromer.img.src = Monochromer.lastObjectURL as string;
         }
     }
 
     static applyEffects() {
-        const frameBuffer = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+        const frameBuffer = Monochromer.ctx.getImageData(0, 0, Monochromer.canvas.width, Monochromer.canvas.height);
 
         //Determine the black/white-ness based on mid point for each pixel
         for (let pixel = 0; pixel < frameBuffer.data.length; pixel += 4) {
             const rgbAverage = (frameBuffer.data[pixel] + frameBuffer.data[pixel + 1] + frameBuffer.data[pixel + 2]) / 3;
-            if (rgbAverage > parseInt(this.midPointInput.value)) {
+            if (rgbAverage > parseInt(Monochromer.midPointInput.value)) {
                 frameBuffer.data[pixel] = 255;
                 frameBuffer.data[pixel + 1] = 255;
                 frameBuffer.data[pixel + 2] = 255;
@@ -94,7 +108,7 @@ class Monochromer {
             }
             frameBuffer.data[pixel + 3] = 255; //No transparency
         }
-        this.ctx.putImageData(frameBuffer, 0, 0); //Update canvas
+        Monochromer.ctx.putImageData(frameBuffer, 0, 0); //Update canvas
     }
 
     static generateCode() {
@@ -104,18 +118,18 @@ class Monochromer {
 /**Auto generated by Monochromer. No to be edited by hand**/
 
 //CONDITIONAL COMPILATION DEFINITIONS
-#define RESOLUTION_640x480
+#define RESOLUTION_${Monochromer.hRes}x${Monochromer.vRes}
 #define PALETTE_1BIT
 
-const unsigned short hPixels = 640; //Number of horizontal pixels in the targeted VGA mode
-const unsigned short vPixels = 480; //Number of vertical pixels in the targeted VGA mode
-const unsigned char cols = ${this.canvas.width/8}; //Number of columns/bytes horizontally supported by the current display mode
-const unsigned char rows = ${this.canvas.height}; //Number of rows vertically supported by the current display mode
+const unsigned short hPixels = ${Monochromer.hRes}; //Number of horizontal pixels in the targeted VGA mode
+const unsigned short vPixels = ${Monochromer.vRes}; //Number of vertical pixels in the targeted VGA mode
+const unsigned char cols = ${Monochromer.canvas.width/8}; //Number of columns/bytes horizontally supported by the current display mode
+const unsigned char rows = ${Monochromer.canvas.height}; //Number of rows vertically supported by the current display mode
 
 //NOTE: The following frame buffer maps directly to the frame buffer displayed
 const unsigned char frameBuffer[rows][cols] PROGMEM = {\n`;
 
-        const frameBuffer = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+        const frameBuffer = Monochromer.ctx.getImageData(0, 0, Monochromer.canvas.width, Monochromer.canvas.height);
 
         for (let row = 0; row < frameBuffer.height; row++) {
             let rowArr = "    {"; //Start a new array for current row
@@ -155,6 +169,35 @@ const unsigned char frameBuffer[rows][cols] PROGMEM = {\n`;
 
         const newWindow = window.open() as Window;
         newWindow.document.body.innerHTML = frameBufferArr;
+    }
+
+    static pointerDownCanvas(event: MouseEvent) {
+        Monochromer.canvasRect = Monochromer.canvas.getBoundingClientRect();
+
+        if (event.ctrlKey) {
+            Monochromer.ctx.strokeStyle = "black";
+        } else {
+            Monochromer.ctx.strokeStyle = "white";
+        }
+        Monochromer.ctx.lineWidth = 1;
+        
+        const mousePosX = event.clientX - Monochromer.canvasRect.left;
+        const mousePosY = event.clientY - Monochromer.canvasRect.top;
+        Monochromer.ctx.beginPath();
+        Monochromer.ctx.moveTo(mousePosX/(Monochromer.hRes/Monochromer.canvas.width), mousePosY/(Monochromer.vRes/Monochromer.canvas.height));
+
+        Monochromer.canvas.addEventListener("mousemove", Monochromer.pointerMoveCanvas);
+    }
+
+    static pointerMoveCanvas(event: MouseEvent) {
+        const mousePosX = event.clientX - Monochromer.canvasRect.left;
+        const mousePosY = event.clientY - Monochromer.canvasRect.top;
+        Monochromer.ctx.lineTo(mousePosX/(Monochromer.hRes/Monochromer.canvas.width), mousePosY/(Monochromer.vRes/Monochromer.canvas.height));
+        Monochromer.ctx.stroke();
+    }
+
+    static pointerUpCanvas() {
+        Monochromer.canvas.removeEventListener("mousemove", Monochromer.pointerMoveCanvas);
     }
 }
 

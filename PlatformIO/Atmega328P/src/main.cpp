@@ -8,82 +8,157 @@
 
 //LOCAL DEFINITIONS
 #define nop5 asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t")
+#ifdef OUTPUT_USART
+    #define OUT_REGISTER UDR0
+#endif
+#ifdef OUTPUT_PORT
+    #define OUT_REGISTER PORTC
+#endif
 
 //GLOBALS
-unsigned char rowItr;
+unsigned char row;
 
 //INTERRUPT SERVICE ROUTINES
 ISR(TIMER0_OVF_vect) {
     //CASE: Painting of a new line started
     
     //NOTE: Within the horizontal sync pulse, all R,G,B channels must be at 0V
-    //Since we are disabling USART at the end of each line, no need to do it here
+    #ifdef OUTPUT_PORT
+        OUT_REGISTER = 0; //Clear the output register
+    #endif
 
     /*NOTE:
     currentVisibleScanLineIndex = currentScanLineIndex - nonVisibleScanLines
-    rowIter increments once per every 2**(vPixels/rows-1) scan lines
+    rowIter increments once per every 2**(vRes/vPixels-1) scan lines
     */
     #ifdef RESOLUTION_800x600
-        rowItr = (TCNT1-27)>>(vPixels/rows-1); //Pre-calculate row iterator for current visible scan line
+        row = (TCNT1-27)>>((vRes/vPixels)/2); //Pre-calculate row iterator for current visible scan line
     #endif
     #ifdef RESOLUTION_640x480
-        rowItr = (TCNT1-35)>>(vPixels/rows-1); //Pre-calculate row iterator for current visible scan line
+        row = (TCNT1-35)>>((vRes/vPixels)/2); //Pre-calculate row iterator for current visible scan line
     #endif
 
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][0]); //Pre-load the first column to transmission buffer
+    #ifdef OUTPUT_USART
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][0]); //Pre-load the first column to transmission buffer
+    #endif
 }
 
 ISR(TIMER0_COMPB_vect) {
     //CASE: Non-sync region of the currently painting line started
 
-    /*NOTE:
-    USART protocol requires small HIGH(5V) time on the transmitter pin to establish connection.
-    Therfore, enabling USART transmission on pin that is LOW(0V) may need to be made HIGH for a few microseconds for it to be ready.
-    */
-    //WARNING: Since we are enabling USART on a LOW pin, few starting pixels on each scan line will turn white
-    //WARNING: Since we are enabling USART on a LOW pin, few starting pixels on each scan line will turn white
-    UCSR0B = (1<<TXEN0); //Turn USART transmitter on
+    #ifdef OUTPUT_USART
+        /*NOTE:
+        USART protocol requires small HIGH(5V) time on the transmitter pin to establish connection.
+        Therfore, enabling USART transmission on pin that is LOW(0V) may need to be made HIGH for a few microseconds for it to be ready.
+        */
+        //WARNING: Since we are enabling USART on a LOW pin, few starting pixels on each scan line will turn white
+        UCSR0B = (1<<TXEN0); //Turn USART transmitter on
 
-    //WARNING: Since we have preloaded the 0th index column, next column is at 1st index
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][1]);
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][2]);
-    nop5;
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][3]);
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][4]);
-    nop5;
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][5]);
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][6]);
-    nop5;
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][7]);
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][8]);
-    nop5;
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][9]);
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][10]);
-    nop5;
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][11]);
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][12]);
-    nop5;
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][13]);
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][14]);
-    nop5;
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][15]);
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][16]);
-    nop5;
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][17]);
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][18]);
-    nop5;
-    UDR0 = pgm_read_byte(&frameBuffer[rowItr][19]);
+        //WARNING: Since we have preloaded the 0th index column, next column is at 1st index
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][1]);
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][2]);
+        nop5;
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][3]);
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][4]);
+        nop5;
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][5]);
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][6]);
+        nop5;
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][7]);
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][8]);
+        nop5;
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][9]);
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][10]);
+        nop5;
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][11]);
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][12]);
+        nop5;
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][13]);
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][14]);
+        nop5;
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][15]);
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][16]);
+        nop5;
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][17]);
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][18]);
+        nop5;
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][19]);
 
-    #ifdef RESOLUTION_640x480
-        UDR0 = pgm_read_byte(&frameBuffer[rowItr][20]);
-        nop5;
-        UDR0 = pgm_read_byte(&frameBuffer[rowItr][21]);
-        UDR0 = pgm_read_byte(&frameBuffer[rowItr][22]);
-        nop5;
-        UDR0 = pgm_read_byte(&frameBuffer[rowItr][23]);
+        #ifdef RESOLUTION_640x480
+            OUT_REGISTER = pgm_read_byte(&frameBuffer[row][20]);
+            nop5;
+            OUT_REGISTER = pgm_read_byte(&frameBuffer[row][21]);
+            OUT_REGISTER = pgm_read_byte(&frameBuffer[row][22]);
+            nop5;
+            OUT_REGISTER = pgm_read_byte(&frameBuffer[row][23]);
+        #endif
+
+        UCSR0B = 0; //Turn USART transmitter off to blank all R,G,B channels
     #endif
+    #ifdef OUTPUT_PORT
+        const unsigned char* pixelIndexPtr = &frameBuffer[row][0]; //Get the pointer to the first pixel of the current row
 
-    UCSR0B = 0; //Turn USART transmitter off to blank all R,G,B channels
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+
+        #ifdef RESOLUTION_640x480
+            OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+            OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+            OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+            OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+            OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+            OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+            OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+            OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+            OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+            OUT_REGISTER = pgm_read_byte(pixelIndexPtr);
+        #endif
+    #endif
 }
 
 //METHODS
@@ -170,25 +245,31 @@ void setupVerticalSignal() {
     #endif
 }
 
-void setupUSART() {
-    //====UBRR0=======================
-    //NOTE: Baud Rate = 16MHz/(2*(1+UBRR0))
-    UBRR0 = 0; //Must be set to zero for maximum baud rate
+void setupOutput() {
+    #ifdef OUTPUT_USART
+        //====UBRR0=======================
+        //NOTE: Baud Rate = 16MHz/(2*(1+UBRR0))
+        UBRR0 = 0; //Must be set to zero for maximum baud rate
 
-    //====IO==========================
-    DDRD |= (1<<PD4); //Set PD4/XCK/D4 as output
+        //====IO==========================
+        DDRD |= (1<<PD4); //Set PD4/XCK/D4 as output
 
-    //====UCSR0C======================
-    UCSR0C |= (1<<UMSEL01) | (1<<UMSEL00); //Use mode: Master SPI (MSPIM)
-    UCSR0C |= (1<<UCPHA0) | (1<<UCPOL0);
-    UCSR0C &= ~(1<<UDORD0); //MSB first transfer mode
+        //====UCSR0C======================
+        UCSR0C |= (1<<UMSEL01) | (1<<UMSEL00); //Use mode: Master SPI (MSPIM)
+        UCSR0C |= (1<<UCPHA0) | (1<<UCPOL0);
+        UCSR0C &= ~(1<<UDORD0); //MSB first transfer mode
+    #endif
+    #ifdef OUTPUT_PORT
+        //====IO==========================
+        DDRC |= 0b00111111; //Set PD0:5 as output
+    #endif
 }
 
 int main(void) {
     //====SIGNALS=====================
     setupHorizontalSignal();
     setupVerticalSignal();
-    setupUSART();
+    setupOutput();
     
     //====INTERRUPTS==================
     sei(); //Enable global interrupts

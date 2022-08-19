@@ -253,8 +253,8 @@ const unsigned char frameBuffer[vBytes][hBytes] PROGMEM = {\n`;
             } else if (Monochromer.frameBuffer.palletteBits === 8) {
                 //CASE: 1 pixel is represented by 8 bits
                 for (let hPixel = 0; hPixel < frameBufferData.width; hPixel++) {
-                    //NOTE: A byte is encoded as 0bRRGGBBAA where AA is always 0
-                    let rowArrByteBin = "";
+                    //NOTE: A byte is encoded as 0bAARRGGBB where AA is always 00
+                    let rowArrByteBin = "00"; //Inititialize with AA bits which are 00
 
                     //Calculate Channel0=R index for current pixel
                     const r = vPixel * (frameBufferData.width * 4) + hPixel * 4;
@@ -262,7 +262,7 @@ const unsigned char frameBuffer[vBytes][hBytes] PROGMEM = {\n`;
                     if (hPixel === frameBufferData.width - 1) {
                         //CASE: Currently processing the last pixel of the line
                         //NOTE: Since the last pixel is stretched, we will bank it and remove that pixel
-                        rowArrByteBin = "00000000";
+                        rowArrByteBin += "000000";
                     } else {
                         //CASE: Currently processing a pixel other than the last pixel
                         //NOTE: By now every R,G,B byte of the current pixel is either 255,170,85 or 0
@@ -279,9 +279,6 @@ const unsigned char frameBuffer[vBytes][hBytes] PROGMEM = {\n`;
                                 rowArrByteBin += "11";
                             }
                         }
-
-                        //Add the AA bits. They are always 00
-                        rowArrByteBin += "00";
                     }
 
                     //NOTE: By now the rowArrByteBin is complete

@@ -20,23 +20,13 @@ unsigned char row;
 
 //INTERRUPT SERVICE ROUTINES
 ISR(TIMER0_OVF_vect) {
-    //CASE: Painting of a new line started
-    
-    //NOTE: Within the horizontal sync pulse, all R,G,B channels must be at 0V
-    #ifdef OUTPUT_PORT
-        OUT_REGISTER = 0; //Clear the output register
-    #endif
+    //CASE: Horizontal sync is reached
 
     /*NOTE:
     currentVisibleScanLineIndex = currentScanLineIndex - nonVisibleScanLines
     rowIter increments once per every 2**(vRes/vPixels-1) scan lines
     */
-    #ifdef RESOLUTION_800x600
-        row = (TCNT1-27)>>((vRes/vPixels)/2); //Pre-calculate row iterator for current visible scan line
-    #endif
-    #ifdef RESOLUTION_640x480
-        row = (TCNT1-35)>>((vRes/vPixels)/2); //Pre-calculate row iterator for current visible scan line
-    #endif
+    row = (TCNT1-35)>>((vRes/vPixels)/2); //Pre-calculate row iterator for current visible scan line
 
     #ifdef OUTPUT_USART
         OUT_REGISTER = pgm_read_byte(&frameBuffer[row][0]); //Pre-load the first column to transmission buffer
@@ -44,7 +34,11 @@ ISR(TIMER0_OVF_vect) {
 }
 
 ISR(TIMER0_COMPB_vect) {
-    //CASE: Non-sync region of the currently painting line started
+    //CASE: Horizontal front porch is reached
+
+    if (TCNT1 < 35 || TCNT1 > 514) {
+        return;
+    }
 
     #ifdef OUTPUT_USART
         /*NOTE:
@@ -83,17 +77,15 @@ ISR(TIMER0_COMPB_vect) {
         OUT_REGISTER = pgm_read_byte(&frameBuffer[row][18]);
         nop5;
         OUT_REGISTER = pgm_read_byte(&frameBuffer[row][19]);
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][20]);
+        nop5;
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][21]);
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][22]);
+        nop5;
+        OUT_REGISTER = pgm_read_byte(&frameBuffer[row][23]);
 
-        #ifdef RESOLUTION_640x480
-            OUT_REGISTER = pgm_read_byte(&frameBuffer[row][20]);
-            nop5;
-            OUT_REGISTER = pgm_read_byte(&frameBuffer[row][21]);
-            OUT_REGISTER = pgm_read_byte(&frameBuffer[row][22]);
-            nop5;
-            OUT_REGISTER = pgm_read_byte(&frameBuffer[row][23]);
-        #endif
-
-        UCSR0B = 0; //Turn USART transmitter off to blank all R,G,B channels
+        //NOTE: Within the back porch, all R,G,B channels must be at 0V
+        UCSR0B = 0; //Turn USART transmitter off at the end of the visible area to blank all R,G,B channels
     #endif
     #ifdef OUTPUT_PORT
         const unsigned char* pixelIndexPtr = &frameBuffer[row][0]; //Get the pointer to the first pixel of the current row
@@ -145,19 +137,19 @@ ISR(TIMER0_COMPB_vect) {
         OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
         OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
         OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
+        OUT_REGISTER = pgm_read_byte(pixelIndexPtr);
 
-        #ifdef RESOLUTION_640x480
-            OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
-            OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
-            OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
-            OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
-            OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
-            OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
-            OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
-            OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
-            OUT_REGISTER = pgm_read_byte(pixelIndexPtr++);
-            OUT_REGISTER = pgm_read_byte(pixelIndexPtr);
-        #endif
+        //NOTE: Within the back porch, all R,G,B channels must be at 0V
+        OUT_REGISTER = 0; //Clear the output register at the end of the visible area
     #endif
 }
 
@@ -172,34 +164,18 @@ void setupHorizontalSignal() {
     TCCR0A |= (1<<COM0B1) | (1<<COM0B0); //Use mode: When in fast PWM, clear OC0B at 0, set OC0B when TCNT0=OCR0B (inverting mode)
 
     //====TCNT0,OCR0A,OCR0B==========
-    #ifdef RESOLUTION_800x600
-        /*NOTE:
-        The counter0 has milestones 0-6(LOW), 6-53(HIGH)
-        0-6.4 is the sync pulse (3.2us)
-        6.4-10.8 is the back porch (2.2us)
-        10.8-50.8 is the visible time (20us)
-        50.8-52.8 is the front porch (1us)
+    /*NOTE:
+    The counter0 has milestones 0-7.6(LOW), 7.6-63.55(HIGH)
+    0-7.6 is the sync pulse (3.8133us)
+    7.6-11.43 is the back porch (1.9066us)
+    11.43-62.28 is the visible time (25.4220us)
+    62.28-63.55 is the front porch (31.7775us)
 
-        0-53 is the total (26.4us)
-        */
-        TCNT0 = 0; //Set the initial counter0 value
-        OCR0B = (unsigned char) 6; //Set OC0B level change value for counter0
-        OCR0A = (unsigned char) 53; //Set counter0 TOP value
-    #endif
-    #ifdef RESOLUTION_640x480
-        /*NOTE:
-        The counter0 has milestones 0-7.6(LOW), 7.6-63.55(HIGH)
-        0-7.6 is the sync pulse (3.8133us)
-        7.6-11.43 is the back porch (1.9066us)
-        11.43-62.28 is the visible time (25.4220us)
-        62.28-63.55 is the front porch (31.7775us)
-
-        0-63.55 is the total (16.5792ms)
-        */
-        TCNT0 = 0; //Set the initial counter0 value
-        OCR0B = (unsigned char) 7; //Set OC0B level change value for counter0
-        OCR0A = (unsigned char) 63; //Set counter0 TOP value
-    #endif
+    0-63.55 is the total (16.5792ms)
+    */
+    TCNT0 = 0; //Set the initial counter0 value
+    OCR0B = (unsigned char) 7; //Set OC0B level change value for counter0
+    OCR0A = (unsigned char) 63; //Set counter0 TOP value
 
     //====TIMSK0==============
     TIMSK0 |= (1<<TOIE0) | (1<<OCIE0B); //Enable counter0 overflow and compareB interrupts
@@ -215,34 +191,18 @@ void setupVerticalSignal() {
     TCCR1A |= (1<<COM1B1) | (1<<COM1B0); //Use mode: When in fast PWM, clear OC1B at 0, set OC1B when TCNT1=OCR1B (inverting mode)
 
     //====TCNT1,OCR1A,OCR1B==========
-    #ifdef RESOLUTION_800x600
-        /*NOTE:
-        The counter1 has milestones 0-4(LOW), 4-628(HIGH)
-        0-4 is the sync pulse (0.1056ms)
-        4-27 is the back porch (0.6072ms)
-        27-627 is the visible time (15.84ms)
-        627-628 is the front porch (0.0264ms)
+    /*NOTE:
+    The counter1 has milestones 0-2(LOW), 2-525(HIGH)
+    0-2 is the sync pulse (0.0635ms)
+    2-35 is the back porch (1.0486ms)
+    35-515.70 is the visible time (15.2532ms)
+    515-525 is the front porch (0.6355ms)
 
-        0-628 is the total (16.5792ms)
-        */
-        TCNT1 = 0; //Set the initial counter1 value
-        OCR1B = (unsigned short) 3; //Set OC1B level change value for counter1
-        OCR1A = (unsigned short) 627; //Set counter1 TOP
-    #endif
-    #ifdef RESOLUTION_640x480
-        /*NOTE:
-        The counter1 has milestones 0-2(LOW), 2-525(HIGH)
-        0-2 is the sync pulse (0.0635ms)
-        2-35 is the back porch (1.0486ms)
-        35-515.70 is the visible time (15.2532ms)
-        515-525 is the front porch (0.6355ms)
-
-        0-525 is the total (16.5792ms)
-        */
-        TCNT1 = 0; //Set the initial counter1 value
-        OCR1B = (unsigned short) 1; //Set OC1B level change value for counter1
-        OCR1A = (unsigned short) 524; //Set counter1 TOP
-    #endif
+    0-525 is the total (16.5792ms)
+    */
+    TCNT1 = 0; //Set the initial counter1 value
+    OCR1B = (unsigned short) 1; //Set OC1B level change value for counter1
+    OCR1A = (unsigned short) 524; //Set counter1 TOP
 }
 
 void setupOutput() {
@@ -257,7 +217,7 @@ void setupOutput() {
         //====UCSR0C======================
         UCSR0C |= (1<<UMSEL01) | (1<<UMSEL00); //Use mode: Master SPI (MSPIM)
         UCSR0C |= (1<<UCPHA0) | (1<<UCPOL0);
-        UCSR0C &= ~(1<<UDORD0); //MSB first transfer mode
+        UCSR0C &= ~(1<<UDORD0); //Use mode: MSB first transfer
     #endif
     #ifdef OUTPUT_PORT
         //====IO==========================

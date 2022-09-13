@@ -4,7 +4,7 @@
 #include <avr/pgmspace.h>
 
 //LOCAL DEPENDENCIES
-#include <640x480/1bit/UoCLogo.h>
+#include <640x480/8bit/UoCLogo.h>
 
 //LOCAL DEFINITIONS
 #define nop5 asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t")
@@ -35,10 +35,6 @@ ISR(TIMER0_OVF_vect) {
 
 ISR(TIMER0_COMPB_vect) {
     //CASE: Horizontal front porch is reached
-
-    if (TCNT1 < 35 || TCNT1 > 514) {
-        return;
-    }
 
     #ifdef OUTPUT_USART
         /*NOTE:

@@ -1,4 +1,5 @@
 import { opine, serveStatic, text } from "https://deno.land/x/opine@2.3.3/mod.ts";
+import { open } from "https://deno.land/x/opener/mod.ts";
 
 const app = opine();
 
@@ -60,11 +61,12 @@ app.get("/", (req, res) => {
 });
 
 app.listen(8080, () => {
-    console.log({
-        component: "Server",
-        status: true,
-        port: 8080,
-        cwd: Deno.cwd()
-    });
+        console.log({
+            component: "Server",
+            status: true,
+            port: 8080,
+            cwd: Deno.cwd()
+        });
+        open("http://localhost:8080");
     }
 );

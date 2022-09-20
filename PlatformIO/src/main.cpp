@@ -4,7 +4,7 @@
 #include <avr/pgmspace.h>
 
 //LOCAL DEPENDENCIES
-#include <640x480/8bit/UoCLogo.h>
+#include <Pixelator.h>
 
 //LOCAL DEFINITIONS
 #define nop5 asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t");asm volatile("nop\n\t")

@@ -66,7 +66,7 @@ class FrameBuffer {
     }
 }
 
-class Monochromer {
+class Pixelator {
     static lastObjectURL: string | null;
 
     static midPointInput: HTMLInputElement;
@@ -78,103 +78,103 @@ class Monochromer {
 
     static canvasRect: DOMRect;
     static handlers = {
-        pointerMoveCanvas: Monochromer.pointerMoveCanvas.bind(Monochromer)
+        pointerMoveCanvas: Pixelator.pointerMoveCanvas.bind(Pixelator)
     };
 
     static {
-        Monochromer.midPointInput = document.getElementById("midPointInput") as HTMLInputElement;
-        Monochromer.buttonContainer = document.getElementById("buttonContainer") as HTMLDivElement;
-        Monochromer.fileInput = Monochromer.buttonContainer.children[0].firstElementChild as HTMLInputElement;
-        Monochromer.img = Monochromer.buttonContainer.children[0].children[1] as HTMLImageElement;
-        Monochromer.canvas = document.querySelector("canvas") as HTMLCanvasElement;
-        Monochromer.frameBuffer = new FrameBuffer(Monochromer.canvas);
+        Pixelator.midPointInput = document.getElementById("midPointInput") as HTMLInputElement;
+        Pixelator.buttonContainer = document.getElementById("buttonContainer") as HTMLDivElement;
+        Pixelator.fileInput = Pixelator.buttonContainer.children[0].firstElementChild as HTMLInputElement;
+        Pixelator.img = Pixelator.buttonContainer.children[0].children[1] as HTMLImageElement;
+        Pixelator.canvas = document.querySelector("canvas") as HTMLCanvasElement;
+        Pixelator.frameBuffer = new FrameBuffer(Pixelator.canvas);
     }
 
     static init() {
         //Clear canvas
-        Monochromer.frameBuffer.ctx.fillStyle = "black";
-        Monochromer.frameBuffer.ctx.fillRect(0, 0, Monochromer.canvas.width, Monochromer.canvas.height);
+        Pixelator.frameBuffer.ctx.fillStyle = "black";
+        Pixelator.frameBuffer.ctx.fillRect(0, 0, Pixelator.canvas.width, Pixelator.canvas.height);
 
         //Add onmousedown and onmouseup to canvas
-        Monochromer.canvas.addEventListener("mousedown", Monochromer.pointerDownCanvas);
-        Monochromer.canvas.addEventListener("mouseup", Monochromer.pointerUpCanvas);
+        Pixelator.canvas.addEventListener("mousedown", Pixelator.pointerDownCanvas);
+        Pixelator.canvas.addEventListener("mouseup", Pixelator.pointerUpCanvas);
 
         //Add onclick to upload file button
-        Monochromer.buttonContainer.children[0].addEventListener("click", () => Monochromer.fileInput.click());
+        Pixelator.buttonContainer.children[0].addEventListener("click", () => Pixelator.fileInput.click());
 
         //Add onload to img
-        Monochromer.img.addEventListener("load", () => {
-            Monochromer.loadImageOnCanvas();
+        Pixelator.img.addEventListener("load", () => {
+            Pixelator.loadImageOnCanvas();
 
             //Auto calculate a suitable mid point
             //NOTE: midpoint = (sum of pixelRGBAverage)/pixelCount
-            const frameBuffer = Monochromer.frameBuffer.ctx.getImageData(0, 0, Monochromer.canvas.width, Monochromer.canvas.height);
+            const frameBuffer = Pixelator.frameBuffer.ctx.getImageData(0, 0, Pixelator.canvas.width, Pixelator.canvas.height);
             let rgbAverageSum = 0;
             for (let pixel = 0; pixel < frameBuffer.data.length; pixel += 4) {
                 const rgbAverage = (frameBuffer.data[pixel] + frameBuffer.data[pixel + 1] + frameBuffer.data[pixel + 2]) / 3;
                 rgbAverageSum += rgbAverage;
             }
 
-            Monochromer.midPointInput.value = (rgbAverageSum / (frameBuffer.data.length / 4)).toString();
+            Pixelator.midPointInput.value = (rgbAverageSum / (frameBuffer.data.length / 4)).toString();
 
             //Immediately preview effects
-            Monochromer.applyEffects();
+            Pixelator.applyEffects();
         });
 
         //Add onchange to upload file input
-        Monochromer.fileInput.addEventListener("change", Monochromer.changeUploadedImage);
+        Pixelator.fileInput.addEventListener("change", Pixelator.changeUploadedImage);
 
         //Add onchange to midpoint input
-        Monochromer.midPointInput.addEventListener("change", () => {
-            Monochromer.loadImageOnCanvas();
-            Monochromer.applyEffects();
+        Pixelator.midPointInput.addEventListener("change", () => {
+            Pixelator.loadImageOnCanvas();
+            Pixelator.applyEffects();
         });
 
         //Add onclick to export button
-        Monochromer.buttonContainer.children[2].addEventListener("click", Monochromer.generateCode);
+        Pixelator.buttonContainer.children[2].addEventListener("click", Pixelator.generateCode);
     }
 
     static loadImageOnCanvas() {
         //Clear canvas
-        Monochromer.frameBuffer.ctx.fillStyle = "black";
-        Monochromer.frameBuffer.ctx.fillRect(0, 0, Monochromer.canvas.width, Monochromer.canvas.height);
+        Pixelator.frameBuffer.ctx.fillStyle = "black";
+        Pixelator.frameBuffer.ctx.fillRect(0, 0, Pixelator.canvas.width, Pixelator.canvas.height);
 
-        let imgScaledWidth = (Monochromer.img.width * Monochromer.canvas.height) / Monochromer.img.height;
-        if (Monochromer.frameBuffer.outputMode === "USART") {
+        let imgScaledWidth = (Pixelator.img.width * Pixelator.canvas.height) / Pixelator.img.height;
+        if (Pixelator.frameBuffer.outputMode === "USART") {
             imgScaledWidth *= 0.7;
-        } else if (Monochromer.frameBuffer.outputMode === "PORT") {
+        } else if (Pixelator.frameBuffer.outputMode === "PORT") {
             imgScaledWidth *= 0.4;
         }
-        Monochromer.frameBuffer.ctx.drawImage(Monochromer.img, (Monochromer.canvas.width - imgScaledWidth) / 2, 0, imgScaledWidth, Monochromer.canvas.height);
+        Pixelator.frameBuffer.ctx.drawImage(Pixelator.img, (Pixelator.canvas.width - imgScaledWidth) / 2, 0, imgScaledWidth, Pixelator.canvas.height);
     }
 
     static changeUploadedImage() {
-        if (Monochromer.fileInput.files) {
-            if (Monochromer.lastObjectURL) {
-                URL.revokeObjectURL(Monochromer.lastObjectURL);
+        if (Pixelator.fileInput.files) {
+            if (Pixelator.lastObjectURL) {
+                URL.revokeObjectURL(Pixelator.lastObjectURL);
             }
-            Monochromer.lastObjectURL = URL.createObjectURL(Monochromer.fileInput.files[0]);
-            Monochromer.img.src = Monochromer.lastObjectURL as string;
+            Pixelator.lastObjectURL = URL.createObjectURL(Pixelator.fileInput.files[0]);
+            Pixelator.img.src = Pixelator.lastObjectURL as string;
         }
     }
 
     static applyEffects() {
-        const imageData = Monochromer.frameBuffer.imageData;
+        const imageData = Pixelator.frameBuffer.imageData;
 
         //Determine the black/white-ness based on mid point for each pixel
         for (let pixel = 0; pixel < imageData.data.length; pixel += 4) {
-            if (Monochromer.frameBuffer.palletteBits === 1) {
+            if (Pixelator.frameBuffer.palletteBits === 1) {
                 //CASE: Each channel must be represented by either 225 or 0
                 //NOTE: All the channel values of the same pixel must be the same
                 const rgbAverage = (imageData.data[pixel] + imageData.data[pixel + 1] + imageData.data[pixel + 2]) / 3;
                 for (let channel = 0; channel < 3; channel++) {
-                    if (rgbAverage > parseInt(Monochromer.midPointInput.value)) {
+                    if (rgbAverage > parseInt(Pixelator.midPointInput.value)) {
                         imageData.data[pixel + channel] = 255;
                     } else {
                         imageData.data[pixel + channel] = 0;
                     } 
                 }
-            } else if (Monochromer.frameBuffer.palletteBits === 8) {
+            } else if (Pixelator.frameBuffer.palletteBits === 8) {
                 //CASE: Each channel must be represented by either 225, 170, 85 or 0
                 //NOTE: All the channel values of the same pixel are not required to be the same
                 for (let channel = 0; channel < 3; channel++) {
@@ -193,7 +193,7 @@ class Monochromer {
             imageData.data[pixel + 3] = 255; //Set alpha channel to no transparency
         }
 
-        Monochromer.frameBuffer.imageData = imageData; //Update canvas
+        Pixelator.frameBuffer.imageData = imageData; //Update canvas
     }
 
     static generateCode() {
@@ -203,25 +203,25 @@ class Monochromer {
 /**Auto generated by Pixelator. No to be edited by hand**/
 
 //CONDITIONAL COMPILATION DEFINITIONS
-#define RESOLUTION_${Monochromer.frameBuffer.hRes}x${Monochromer.frameBuffer.vRes}
-#define PALETTE_${Monochromer.frameBuffer.palletteBits}BIT
-#define OUTPUT_${Monochromer.frameBuffer.outputMode}
+#define RESOLUTION_${Pixelator.frameBuffer.hRes}x${Pixelator.frameBuffer.vRes}
+#define PALETTE_${Pixelator.frameBuffer.palletteBits}BIT
+#define OUTPUT_${Pixelator.frameBuffer.outputMode}
 
-const unsigned short vRes = ${Monochromer.frameBuffer.vRes}; //Number of vertical display pixels in the targeted VGA mode
-const unsigned short hRes = ${Monochromer.frameBuffer.hRes}; //Number of horizontal display pixels in the targeted VGA mode
-const unsigned short vPixels = ${Monochromer.frameBuffer.vPixels}; //Number of actual vertical pixels
-const unsigned short hPixels = ${Monochromer.frameBuffer.hPixels}; //Number of actual horizontal pixels
-const unsigned char vBytes = ${Monochromer.frameBuffer.vBytes}; //Number of rows in the frame buffer
-const unsigned char hBytes = ${Monochromer.frameBuffer.hBytes}; //Number of bytes in a row of the frame buffer
+const unsigned short vRes = ${Pixelator.frameBuffer.vRes}; //Number of vertical display pixels in the targeted VGA mode
+const unsigned short hRes = ${Pixelator.frameBuffer.hRes}; //Number of horizontal display pixels in the targeted VGA mode
+const unsigned short vPixels = ${Pixelator.frameBuffer.vPixels}; //Number of actual vertical pixels
+const unsigned short hPixels = ${Pixelator.frameBuffer.hPixels}; //Number of actual horizontal pixels
+const unsigned char vBytes = ${Pixelator.frameBuffer.vBytes}; //Number of rows in the frame buffer
+const unsigned char hBytes = ${Pixelator.frameBuffer.hBytes}; //Number of bytes in a row of the frame buffer
 
 const unsigned char frameBuffer[vBytes][hBytes] PROGMEM = {\n`;
 
-        const frameBufferData = Monochromer.frameBuffer.imageData;
+        const frameBufferData = Pixelator.frameBuffer.imageData;
 
         for (let vPixel = 0; vPixel < frameBufferData.height; vPixel++) {
             let rowArr = "    {"; //Start a new array for current row
 
-            if (Monochromer.frameBuffer.palletteBits === 1) {
+            if (Pixelator.frameBuffer.palletteBits === 1) {
                 //CASE: 1 pixel is represented by 1 bit
                 for (let hPixel = 0; hPixel < frameBufferData.width; hPixel += 8) {
                     let rowArrByteBin = "";
@@ -250,7 +250,7 @@ const unsigned char frameBuffer[vBytes][hBytes] PROGMEM = {\n`;
                     const rowArrByteHex = parseInt(rowArrByteBin, 2).toString(16).toUpperCase(); //Parse the binary string as hex with uppercase
                     rowArr += "0x" + (rowArrByteHex.length == 1 ? "0" + rowArrByteHex : rowArrByteHex) + ","; //Make the hex always 2 digit //Insert the hex byte as the next element in the rowStr array
                 }
-            } else if (Monochromer.frameBuffer.palletteBits === 8) {
+            } else if (Pixelator.frameBuffer.palletteBits === 8) {
                 //CASE: 1 pixel is represented by 8 bits
                 for (let hPixel = 0; hPixel < frameBufferData.width; hPixel++) {
                     //NOTE: A byte is encoded as 0bAARRGGBB where AA is always 00
@@ -292,7 +292,7 @@ const unsigned char frameBuffer[vBytes][hBytes] PROGMEM = {\n`;
 
         content = content.slice(0, -2) + "\n};"; //Remove the trailing comma in the last array //Close the multi dimensional array
 
-        Monochromer.uploadToMCU(content);
+        Pixelator.uploadToMCU(content);
     }
 
     static uploadToMCU(content: string) {
@@ -324,33 +324,33 @@ const unsigned char frameBuffer[vBytes][hBytes] PROGMEM = {\n`;
     }
 
     static pointerDownCanvas(event: MouseEvent) {
-        Monochromer.canvasRect = Monochromer.canvas.getBoundingClientRect();
+        Pixelator.canvasRect = Pixelator.canvas.getBoundingClientRect();
 
         if (event.ctrlKey) {
-            Monochromer.frameBuffer.ctx.strokeStyle = "black";
+            Pixelator.frameBuffer.ctx.strokeStyle = "black";
         } else {
-            Monochromer.frameBuffer.ctx.strokeStyle = "white";
+            Pixelator.frameBuffer.ctx.strokeStyle = "white";
         }
-        Monochromer.frameBuffer.ctx.lineWidth = 1;
+        Pixelator.frameBuffer.ctx.lineWidth = 1;
 
-        const mousePosX = event.clientX - Monochromer.canvasRect.left;
-        const mousePosY = event.clientY - Monochromer.canvasRect.top;
-        Monochromer.frameBuffer.ctx.beginPath();
-        Monochromer.frameBuffer.ctx.moveTo(mousePosX / (Monochromer.frameBuffer.hRes / Monochromer.frameBuffer.vPixels), mousePosY / (Monochromer.frameBuffer.vRes / Monochromer.frameBuffer.hPixels));
+        const mousePosX = event.clientX - Pixelator.canvasRect.left;
+        const mousePosY = event.clientY - Pixelator.canvasRect.top;
+        Pixelator.frameBuffer.ctx.beginPath();
+        Pixelator.frameBuffer.ctx.moveTo(mousePosX / (Pixelator.frameBuffer.hRes / Pixelator.frameBuffer.vPixels), mousePosY / (Pixelator.frameBuffer.vRes / Pixelator.frameBuffer.hPixels));
 
-        Monochromer.canvas.addEventListener("mousemove", Monochromer.pointerMoveCanvas);
+        Pixelator.canvas.addEventListener("mousemove", Pixelator.pointerMoveCanvas);
     }
 
     static pointerMoveCanvas(event: MouseEvent) {
-        const mousePosX = event.clientX - Monochromer.canvasRect.left;
-        const mousePosY = event.clientY - Monochromer.canvasRect.top;
-        Monochromer.frameBuffer.ctx.lineTo(mousePosX / (Monochromer.frameBuffer.hRes / Monochromer.frameBuffer.vPixels), mousePosY / (Monochromer.frameBuffer.vRes / Monochromer.frameBuffer.hPixels));
-        Monochromer.frameBuffer.ctx.stroke();
+        const mousePosX = event.clientX - Pixelator.canvasRect.left;
+        const mousePosY = event.clientY - Pixelator.canvasRect.top;
+        Pixelator.frameBuffer.ctx.lineTo(mousePosX / (Pixelator.frameBuffer.hRes / Pixelator.frameBuffer.vPixels), mousePosY / (Pixelator.frameBuffer.vRes / Pixelator.frameBuffer.hPixels));
+        Pixelator.frameBuffer.ctx.stroke();
     }
 
     static pointerUpCanvas() {
-        Monochromer.canvas.removeEventListener("mousemove", Monochromer.pointerMoveCanvas);
+        Pixelator.canvas.removeEventListener("mousemove", Pixelator.pointerMoveCanvas);
     }
 }
 
-Monochromer.init();
+Pixelator.init();

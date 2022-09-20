@@ -1,64 +1,88 @@
 class FrameBuffer {
-    private hPixelsPerByte: number;
+    private hPixelsPerByte = 8;
 
-    readonly hRes: number;
-    readonly vRes: number;
-    readonly hPixels: number;
-    readonly vPixels: number;
+    readonly hRes = 640;
+    readonly vRes = 480;
+    // readonly hPixels: number;
+    // readonly vPixels: number;
+    readonly canvas: HTMLCanvasElement;
     readonly ctx: CanvasRenderingContext2D;
 
     constructor(canvas: HTMLCanvasElement) {
-        this.hPixelsPerByte = parseInt(canvas.dataset.hPixelsPerByte!);
-        if (this.hPixelsPerByte === 1) {
-            //CASE: Pallette is 8bit, output mode is PORT
-            //So, the supported pixel grid is 57x120
-            canvas.width = 57;
-            canvas.height = 120;
-        } else if (this.hPixelsPerByte === 8) {
-            //CASE: Pallette is 1bit, output mode is USART
-            //So, the supported pixel grid is 192x240
-            canvas.width = 192;
-            canvas.height = 240;
-        }
+        // if (this.hPixelsPerByte === 1) {
+        //     //CASE: Pallette is 8bit, output mode is PORT
+        //     //So, the supported pixel grid is 57x120
+        //     canvas.width = 57;
+        //     canvas.height = 120;
+        // } else if (this.hPixelsPerByte === 8) {
+        //     //CASE: Pallette is 1bit, output mode is USART
+        //     //So, the supported pixel grid is 192x240
+        //     canvas.width = 192;
+        //     canvas.height = 240;
+        // }
 
-        this.hPixels = canvas.width;
-        this.vPixels = canvas.height;
-        this.hRes = parseInt(canvas.dataset.hRes!);
-        this.vRes = parseInt(canvas.dataset.vRes!);
+        // this.hPixels = canvas.width;
+        // this.vPixels = canvas.height;
 
+        this.canvas = canvas;
         this.ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
-    }
-
-    get outputMode() {
-        if (this.hPixelsPerByte === 1) {
-            return "PORT";
-        } else if (this.hPixelsPerByte === 8) {
-            return "USART";
-        } else {
-            return "UNKNOWN"
-        }
     }
 
     get palletteBits() {
         if (this.hPixelsPerByte === 1) {
             return 8;
-        } else if (this.hPixelsPerByte === 8) {
-            return 1;
         } else {
-            return -1
+            return 1;
+        }
+    }
+
+    set palletteBits(palletteBits: number) {
+        if (palletteBits === 1) {
+            this.hPixelsPerByte = 8;
+        } else {
+            this.hPixelsPerByte = 1;
+        }
+
+        if (this.palletteBits === 8) {
+            //CASE: Pallette is 8bit, output mode is PORT
+            //So, the supported pixel grid is 57x120
+            this.canvas.width = 57;
+            this.canvas.height = 120;
+        } else if (this.palletteBits === 1) {
+            //CASE: Pallette is 1bit, output mode is USART
+            //So, the supported pixel grid is 192x240
+            this.canvas.width = 192;
+            this.canvas.height = 240;
+        }
+
+        Pixelator.loadImageOnCanvas();
+        Pixelator.applyEffects();
+    }
+
+    get outputMode() {
+        if (this.palletteBits === 1) {
+            return "USART";
+        } else {
+            return "PORT";
         }
     }
 
     get hBytes() {
-        return this.hPixels / this.hPixelsPerByte;
+        if (this.palletteBits === 1) {
+            //CASE: 1 byte can hold 8 pixels
+            return this.canvas.width / 8;
+        } else {
+            //CASE: 1 byte can hold 1 pixel
+            return this.canvas.width;
+        }
     }
 
     get vBytes() {
-        return this.vPixels;
+        return this.canvas.height;
     }
 
     get imageData(): ImageData {
-        return this.ctx.getImageData(0, 0, this.hPixels, this.vPixels);
+        return this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
     }
 
     set imageData(frameBufferData: ImageData) {
@@ -68,13 +92,19 @@ class FrameBuffer {
 
 class Pixelator {
     static lastObjectURL: string | null;
-
-    static midPointInput: HTMLInputElement;
-    static buttonContainer: HTMLDivElement;
-    static fileInput: HTMLInputElement;
-    static img: HTMLImageElement;
-    static canvas: HTMLCanvasElement;
     static frameBuffer: FrameBuffer;
+
+    static inputContainer: HTMLDivElement;
+    static loadImgButton: HTMLDivElement;
+    static fileInput: HTMLInputElement;
+    static img = new Image(640, 480);
+    static midPointInput: HTMLInputElement;
+    static flashCodeButton: HTMLButtonElement;
+    static bit8Radio: HTMLInputElement;
+    static bit1Radio: HTMLInputElement;
+    static canvas: HTMLCanvasElement;
+    static outputResolutionDisplay: HTMLHeadingElement;
+    static midPointInputDisplay: HTMLHeadingElement;
 
     static canvasRect: DOMRect;
     static handlers = {
@@ -82,11 +112,18 @@ class Pixelator {
     };
 
     static {
-        Pixelator.midPointInput = document.getElementById("midPointInput") as HTMLInputElement;
-        Pixelator.buttonContainer = document.getElementById("buttonContainer") as HTMLDivElement;
-        Pixelator.fileInput = Pixelator.buttonContainer.children[0].firstElementChild as HTMLInputElement;
-        Pixelator.img = Pixelator.buttonContainer.children[0].children[1] as HTMLImageElement;
+        Pixelator.inputContainer = document.getElementById("inputContainer") as HTMLDivElement;
+        Pixelator.loadImgButton = Pixelator.inputContainer.querySelector("#loadImgButton") as HTMLInputElement;
+        Pixelator.fileInput = Pixelator.inputContainer.querySelector("#fileInput") as HTMLInputElement;
+        Pixelator.img = Pixelator.inputContainer.querySelector("img") as HTMLImageElement;
+        Pixelator.midPointInput = Pixelator.inputContainer.querySelector("#midPointInput") as HTMLInputElement;
+        Pixelator.flashCodeButton = Pixelator.inputContainer.querySelector("#flashCodeButton") as HTMLButtonElement;
+        Pixelator.bit8Radio = Pixelator.inputContainer.querySelector("#bit8Radio") as HTMLInputElement;
+        Pixelator.bit1Radio = Pixelator.inputContainer.querySelector("#bit1Radio") as HTMLInputElement;
         Pixelator.canvas = document.querySelector("canvas") as HTMLCanvasElement;
+        Pixelator.outputResolutionDisplay = document.getElementById("outputResolutionDisplay") as HTMLHeadingElement;
+        Pixelator.midPointInputDisplay = document.getElementById("midPointInputDisplay") as HTMLHeadingElement;
+
         Pixelator.frameBuffer = new FrameBuffer(Pixelator.canvas);
     }
 
@@ -99,8 +136,8 @@ class Pixelator {
         Pixelator.canvas.addEventListener("mousedown", Pixelator.pointerDownCanvas);
         Pixelator.canvas.addEventListener("mouseup", Pixelator.pointerUpCanvas);
 
-        //Add onclick to upload file button
-        Pixelator.buttonContainer.children[0].addEventListener("click", () => Pixelator.fileInput.click());
+        //Add onclick to upload loadImgButton
+        Pixelator.loadImgButton.addEventListener("click", () => Pixelator.fileInput.click());
 
         //Add onload to img
         Pixelator.img.addEventListener("load", () => {
@@ -116,6 +153,7 @@ class Pixelator {
             }
 
             Pixelator.midPointInput.value = (rgbAverageSum / (frameBuffer.data.length / 4)).toString();
+            Pixelator.midPointInput.dispatchEvent(new Event("change"));
 
             //Immediately preview effects
             Pixelator.applyEffects();
@@ -126,12 +164,42 @@ class Pixelator {
 
         //Add onchange to midpoint input
         Pixelator.midPointInput.addEventListener("change", () => {
+            Pixelator.midPointInputDisplay.textContent = Pixelator.midPointInput.value;
             Pixelator.loadImageOnCanvas();
             Pixelator.applyEffects();
         });
 
+        //Add onchange to bit8Radio and bit1Radio input
+        Pixelator.bit1Radio.addEventListener("change", () => {
+            if (Pixelator.bit1Radio.checked) {
+                Pixelator.outputResolutionDisplay.textContent = "192x240";
+
+                const inputContainerChildern = Array.from(Pixelator.inputContainer.children) as HTMLElement[];
+                inputContainerChildern.at(-1)!.style.visibility = "visible";
+                inputContainerChildern.at(-2)!.style.visibility = "visible";
+                inputContainerChildern.at(-3)!.style.visibility = "visible";
+
+                Pixelator.frameBuffer.palletteBits = 1;
+            }
+        });
+        Pixelator.bit8Radio.addEventListener("change", () => {
+            if (Pixelator.bit8Radio.checked) {
+                Pixelator.outputResolutionDisplay.textContent = "57x240";
+
+                const inputContainerChildern = Array.from(Pixelator.inputContainer.children) as HTMLElement[];
+                inputContainerChildern.at(-1)!.style.visibility = "hidden";
+                inputContainerChildern.at(-2)!.style.visibility = "hidden";
+                inputContainerChildern.at(-3)!.style.visibility = "hidden";
+                
+                Pixelator.frameBuffer.palletteBits = 8;
+            }
+        });
+
         //Add onclick to export button
-        Pixelator.buttonContainer.children[2].addEventListener("click", Pixelator.generateCode);
+        Pixelator.flashCodeButton.addEventListener("click", () => {
+            const code = Pixelator.generateCode();
+            Pixelator.sendFlashRequest(code);
+        });
     }
 
     static loadImageOnCanvas() {
@@ -140,9 +208,9 @@ class Pixelator {
         Pixelator.frameBuffer.ctx.fillRect(0, 0, Pixelator.canvas.width, Pixelator.canvas.height);
 
         let imgScaledWidth = (Pixelator.img.width * Pixelator.canvas.height) / Pixelator.img.height;
-        if (Pixelator.frameBuffer.outputMode === "USART") {
+        if (Pixelator.frameBuffer.palletteBits === 1) {
             imgScaledWidth *= 0.7;
-        } else if (Pixelator.frameBuffer.outputMode === "PORT") {
+        } else if (Pixelator.frameBuffer.palletteBits === 8) {
             imgScaledWidth *= 0.4;
         }
         Pixelator.frameBuffer.ctx.drawImage(Pixelator.img, (Pixelator.canvas.width - imgScaledWidth) / 2, 0, imgScaledWidth, Pixelator.canvas.height);
@@ -209,8 +277,8 @@ class Pixelator {
 
 const unsigned short vRes = ${Pixelator.frameBuffer.vRes}; //Number of vertical display pixels in the targeted VGA mode
 const unsigned short hRes = ${Pixelator.frameBuffer.hRes}; //Number of horizontal display pixels in the targeted VGA mode
-const unsigned short vPixels = ${Pixelator.frameBuffer.vPixels}; //Number of actual vertical pixels
-const unsigned short hPixels = ${Pixelator.frameBuffer.hPixels}; //Number of actual horizontal pixels
+const unsigned short vPixels = ${Pixelator.frameBuffer.canvas.height}; //Number of actual vertical pixels
+const unsigned short hPixels = ${Pixelator.frameBuffer.canvas.width}; //Number of actual horizontal pixels
 const unsigned char vBytes = ${Pixelator.frameBuffer.vBytes}; //Number of rows in the frame buffer
 const unsigned char hBytes = ${Pixelator.frameBuffer.hBytes}; //Number of bytes in a row of the frame buffer
 
@@ -292,10 +360,10 @@ const unsigned char frameBuffer[vBytes][hBytes] PROGMEM = {\n`;
 
         content = content.slice(0, -2) + "\n};"; //Remove the trailing comma in the last array //Close the multi dimensional array
 
-        Pixelator.uploadToMCU(content);
+        return content;
     }
 
-    static uploadToMCU(content: string) {
+    static sendFlashRequest(content: string) {
         fetch("/build", {
             method: "POST",
             headers: {
@@ -336,7 +404,7 @@ const unsigned char frameBuffer[vBytes][hBytes] PROGMEM = {\n`;
         const mousePosX = event.clientX - Pixelator.canvasRect.left;
         const mousePosY = event.clientY - Pixelator.canvasRect.top;
         Pixelator.frameBuffer.ctx.beginPath();
-        Pixelator.frameBuffer.ctx.moveTo(mousePosX / (Pixelator.frameBuffer.hRes / Pixelator.frameBuffer.vPixels), mousePosY / (Pixelator.frameBuffer.vRes / Pixelator.frameBuffer.hPixels));
+        Pixelator.frameBuffer.ctx.moveTo(mousePosX / (Pixelator.frameBuffer.hRes / Pixelator.frameBuffer.canvas.height), mousePosY / (Pixelator.frameBuffer.vRes / Pixelator.frameBuffer.canvas.width));
 
         Pixelator.canvas.addEventListener("mousemove", Pixelator.pointerMoveCanvas);
     }
@@ -344,7 +412,7 @@ const unsigned char frameBuffer[vBytes][hBytes] PROGMEM = {\n`;
     static pointerMoveCanvas(event: MouseEvent) {
         const mousePosX = event.clientX - Pixelator.canvasRect.left;
         const mousePosY = event.clientY - Pixelator.canvasRect.top;
-        Pixelator.frameBuffer.ctx.lineTo(mousePosX / (Pixelator.frameBuffer.hRes / Pixelator.frameBuffer.vPixels), mousePosY / (Pixelator.frameBuffer.vRes / Pixelator.frameBuffer.hPixels));
+        Pixelator.frameBuffer.ctx.lineTo(mousePosX / (Pixelator.frameBuffer.hRes / Pixelator.frameBuffer.canvas.height), mousePosY / (Pixelator.frameBuffer.vRes / Pixelator.frameBuffer.canvas.width));
         Pixelator.frameBuffer.ctx.stroke();
     }
 

@@ -13,20 +13,42 @@
 
 <body>
     <div style="grid-area: r3; flex-direction: column;">
-        <h3>Pixelator</h3>
     </div>
-    <div style="grid-area: r2;">
+    <div style="grid-area: s2;">
         <div class="card">
-            <canvas data-h-res="640" data-v-res="480" data-h-pixels-per-byte="1"></canvas>
+            <canvas width="192" height="240"></canvas>
         </div>
     </div>
-    <div id="buttonContainer" style="grid-area: r1;">
-        <button title="Upload reference image" style="background-image: url(./img/file_upload_FILL0_wght400_GRAD0_opsz48.png);">
-            <input type="file" style="display: none;">
-            <img style="display: none;"/>
-        </button>
-        <input title="Monochrome point" type="range" id="midPointInput" value="125" start="0" step="1" end="255">
-        <button title="Generate code" style="background-image: url(./img/file_download_FILL0_wght400_GRAD0_opsz48.png);"></button>
+    <div id="inputContainer" style="grid-area: r2;">
+        <h2>Import and Flash</h3>
+        <div>
+            <button id="loadImgButton" title="Import image" style="background-image: url(./img/file_download_FILL0_wght400_GRAD0_opsz48.png);">
+                <input id="fileInput" type="file" style="display: none;">
+                <img style="display: none;"/>
+            </button>
+            <button id="flashCodeButton" title="Export to device" style="background-image: url(./img/file_upload_FILL0_wght400_GRAD0_opsz48.png);"></button>
+        </div>
+
+        <h2>Mode</h3>
+        <h1>640x480@60Hz</h1>
+            
+        <h2>Pallette</h3>
+        <div style="display: flex; align-items: center;">
+            <h1 style="margin: 0 20px 0 20px">8 bit</h1>
+            <input type="radio" name="paletteInput" id="bit8Radio">
+            <h1 style="margin: 0 20px 0 20px">1 bit</h1>
+            <input type="radio" name="paletteInput" id="bit1Radio" checked="checked">
+        </div>
+
+        <h2>Output Resolution</h3>
+        <h1 id="outputResolutionDisplay">192x240</h1>
+
+        <h2>Black & White Differentiation Point</h3>
+        <h1 id="midPointInputDisplay">125</h1>
+        <input id="midPointInput" title="Black & White differentiation point" type="range" value="125" min="0" step="1" max="255">
+    </div>
+    <div style="grid-area: r1;">
+
     </div>
 </body>
 

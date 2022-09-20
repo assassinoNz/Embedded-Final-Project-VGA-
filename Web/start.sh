@@ -1,0 +1,1 @@
+Deno --unstable  run --allow-run --allow-net --allow-read --allow-write --allow-env index.ts;

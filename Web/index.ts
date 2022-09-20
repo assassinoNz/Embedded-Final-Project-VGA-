@@ -12,9 +12,9 @@ async function executeShellCommand(req, res, command: string) {
         "/c"
     ];
 
-    if (command == "build") {
+    if (command == "compile") {
         cmd.push("cd ../PlatformIO; pio run --environment ATmega328P");
-    } else if (command == "upload") {
+    } else if (command == "flash") {
         cmd.push("cd ../PlatformIO; pio run --target upload");
     }
 
@@ -45,13 +45,13 @@ async function executeShellCommand(req, res, command: string) {
     }
 }
 
-app.post("/build", text(), async (req, res) => {
+app.post("/compile", text(), async (req, res) => {
     await Deno.writeFile(`${Deno.cwd().replaceAll("\\", "/")}/../PlatformIO/include/Pixelator.h`, textEncoder.encode(req.parsedBody));
-    await executeShellCommand(req, res, "build");
+    await executeShellCommand(req, res, "compile");
 });
 
-app.get("/upload", async (req, res) => {
-    await executeShellCommand(req, res, "upload");
+app.get("/flash", async (req, res) => {
+    await executeShellCommand(req, res, "flash");
 });
 
 app.use(serveStatic("public"));

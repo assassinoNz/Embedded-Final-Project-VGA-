@@ -364,7 +364,7 @@ const unsigned char frameBuffer[vBytes][hBytes] PROGMEM = {\n`;
     }
 
     static sendFlashRequest(content: string) {
-        fetch("/build", {
+        fetch("/compile", {
             method: "POST",
             headers: {
                 "Content-Type": "text/plain"
@@ -376,17 +376,17 @@ const unsigned char frameBuffer[vBytes][hBytes] PROGMEM = {\n`;
             console.log(res.data);
             if (res.status) {
                 
-                fetch("/upload")
+                fetch("/flash")
                 .then(res => res.json())
                 .then(res => {
                     console.log(res.data);
                     if (!res.status) {
-                        alert("Upload failed. Refer console for more details");
+                        alert("Flashing failed. Refer console for more details");
                     }
                 });
 
             } else {
-                alert("Build failed. Refer console for more details");
+                alert("Compilation failed. Refer console for more details");
             }
         });
     }

@@ -60,7 +60,7 @@ body {
 }
 
 h1 {
-    font-size: 65px;
+    font-size: 40px;
     margin-bottom: 20px;
     color: gray;
 }
@@ -96,14 +96,14 @@ body>div {
 
 button {
     margin: 20px 0 20px 20px;
-    height: 8vmin;
-    width: 8vmin;
+    height: 6vmin;
+    width: 6vmin;
 
     background-color: var(--buttonGlyphBackgroundColor);
     border-radius: 4vh;
     box-shadow: 0 0 10px 0 black;
     background-position: center center;
-    background-size: 50%;
+    background-size: 60%;
     background-repeat: no-repeat;
 }
 
@@ -116,8 +116,8 @@ button:hover {
 }
 
 input[type="radio"] {
-    height: 8vmin;
-    width: 8vmin;
+    height: 5vmin;
+    width: 5vmin;
 
     margin: 20px 0 20px 0;
 }
